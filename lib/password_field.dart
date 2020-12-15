@@ -13,7 +13,12 @@ class _PasswordFieldState extends State<PasswordField> {
   bool _isShowPassword = true;
 
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) => TextFormField(
+        validator: (text) {
+          if (text.length < 5) return 'password is too short';
+
+          return null;
+        },
         controller: widget.controller,
         obscureText: _isShowPassword,
         style: TextStyle(
