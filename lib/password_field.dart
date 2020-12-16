@@ -40,8 +40,8 @@ class _PasswordFieldState extends State<PasswordField> {
             },
             child: Icon(
               _isShowPassword
-                  ? Icons.local_activity
-                  : Icons.remove_red_eye_rounded,
+                  ? Icons.remove_red_eye_sharp
+                  : Icons.flip_camera_ios,
               size: 18,
             ),
           ),

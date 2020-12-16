@@ -18,6 +18,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() {
     bool isValid = _formKey.currentState.validate();
     if (!isValid) return;
+
+    print(_emailController.text);
+    print(_passwordController.text);
   }
 
   @override
@@ -41,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
         body: Form(
           key: _formKey,
           child: ListView(
-            physics: BouncingScrollPhysics(),
             padding: EdgeInsets.all(20),
             children: [
               Text(
@@ -57,12 +59,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               TextFormField(
                 validator: (text) {
-                  final rgx = RegExp(
-                      """^[a-zA-Z0-9.!#\$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*\$""");
-                  bool isValid = rgx.hasMatch(text);
-                  if (isValid) return null;
-
-                  return 'invalid email';
+                  if (text.isEmpty)
+                    return 'email is empty';
+                  else if (text.length < 5)
+                    return 'email is too short';
+                  else
+                    return null;
                 },
                 controller: _emailController,
                 textInputAction: TextInputAction.next,
@@ -126,10 +128,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
+                  Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => SignUpScreen(),
+                      builder: (context) {
+                        return SignUpScreen();
+                      },
                     ),
                   );
                 },
