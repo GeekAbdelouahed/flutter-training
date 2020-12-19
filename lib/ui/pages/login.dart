@@ -1,28 +1,44 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:hello/services/network.dart';
+import 'package:hello/ui/pages/main.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'password_field.dart';
+import '../components/password_field.dart';
+import 'home.dart';
+import 'signup.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key key}) : super(key: key);
+import '../../constants.dart';
+
+class LoginScreen extends StatefulWidget {
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  State<StatefulWidget> createState() => _LoginScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
-  TextEditingController _fullNameController;
+class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _emailController;
   TextEditingController _passwordController;
-  TextEditingController _confirmPasswordController;
 
   GlobalKey<FormState> _formKey = GlobalKey();
 
-  void _saveData(http.Response response) async {
-    String body = response.body;
-    Map<String, dynamic> data = json.decode(body);
+  void _checkLogin() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String accessToken = preferences.getString('accessToken');
 
+    bool isLoggedUser = accessToken != null;
+
+    if (isLoggedUser) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => MainPage(),
+        ),
+      );
+    }
+  }
+
+  void _saveData(Map<String, dynamic> data) async {
     String accessToken = data['data']['accessToken'];
     String refreshToekn = data['data']['refreshToken'];
 
@@ -51,14 +67,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
 
-    Navigator.of(context).pop();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => HomeScreen(),
+      ),
+    );
   }
 
-  void _signUp(
-    String fullName,
+  void _login(
     String email,
     String password,
-    String confirmPasswod,
   ) async {
     showDialog(
       context: context,
@@ -77,24 +95,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
 
-    String url = 'http://192.168.0.167:3000/auth/sign-up';
+    String url = '${AppConstants.HOST}auth/login';
 
-    final data = {
-      'fullName': fullName,
+    final body = {
       'email': email,
       'password': password,
-      'passwordConfirmation': confirmPasswod,
     };
 
-    http.Response response = await http.post(url, body: data);
+    final AppNetwork appNetwork = AppNetwork();
+
+    final Map<String, dynamic> data = await appNetwork.post(url, body: body);
 
     Navigator.pop(context);
 
-    if (response.statusCode == 201) {
-      _saveData(response);
-    } else {
-      print('server error');
-    }
+    _saveData(data);
   }
 
   void _validInputs() {
@@ -102,32 +116,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!isValid) return;
 
     String password = _passwordController.text;
-    String confirmPassword = _confirmPasswordController.text;
-
-    if (password != confirmPassword) {
-      showDialog(
-        context: context,
-        child: AlertDialog(
-          title: Text('Warning'),
-          content: Text('Passwords not matched!'),
-        ),
-      );
-      return;
-    }
-
-    String fullName = _fullNameController.text;
     String email = _emailController.text;
 
-    _signUp(fullName, email, password, confirmPassword);
+    _login(email, password);
   }
 
   @override
   void initState() {
     super.initState();
-    _fullNameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    _confirmPasswordController = TextEditingController();
+
+    _checkLogin();
   }
 
   @override
@@ -147,7 +147,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             padding: EdgeInsets.all(20),
             children: [
               Text(
-                'Sign Up',
+                'Login',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 25,
@@ -156,27 +156,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               SizedBox(
                 height: 50,
-              ),
-              TextFormField(
-                validator: (text) {
-                  if (text.isEmpty)
-                    return 'fullName is empty';
-                  else if (text.length < 5)
-                    return 'fullName is too short';
-                  else
-                    return null;
-                },
-                controller: _fullNameController,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: 'fullName',
-                  labelStyle: TextStyle(
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 20,
               ),
               TextFormField(
                 validator: (text) {
@@ -202,14 +181,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               PasswordField(
                 controller: _passwordController,
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              PasswordField(
-                controller: _confirmPasswordController,
-                lable: 'Confirm Password',
-                inputAction: TextInputAction.done,
               ),
               SizedBox(
                 height: 50,
@@ -238,12 +209,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(
-                      'Sign up',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w300,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Log in',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -253,13 +228,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               InkWell(
                 onTap: () {
-                  /*Navigator.of(context).push(
-                   MaterialPageRoute(
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
                       builder: (context) {
-                        return HomeScreen();
+                        return SignUpScreen();
                       },
                     ),
-                  );*/
+                  );
                 },
                 child: RichText(
                   textAlign: TextAlign.center,

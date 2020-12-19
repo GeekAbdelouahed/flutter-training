@@ -1,44 +1,26 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:hello/password_field.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:hello/services/network.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'home.dart';
-import 'signup.dart';
+import '../components/password_field.dart';
+import '../../constants.dart';
 
-class LoginScreen extends StatefulWidget {
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({Key key}) : super(key: key);
   @override
-  State<StatefulWidget> createState() => _LoginScreenState();
+  _SignUpScreenState createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
+  TextEditingController _fullNameController;
   TextEditingController _emailController;
   TextEditingController _passwordController;
+  TextEditingController _confirmPasswordController;
 
   GlobalKey<FormState> _formKey = GlobalKey();
 
-  void _checkLogin() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    String accessToken = preferences.getString('accessToken');
-
-    bool isLoggedUser = accessToken != null;
-
-    if (isLoggedUser) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(),
-        ),
-      );
-    }
-  }
-
-  void _saveData(http.Response response) async {
-    String body = response.body;
-    Map<String, dynamic> data = json.decode(body);
-
+  void _saveData(Map<String, dynamic> data) async {
     String accessToken = data['data']['accessToken'];
     String refreshToekn = data['data']['refreshToken'];
 
@@ -67,16 +49,14 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => HomeScreen(),
-      ),
-    );
+    Navigator.of(context).pop();
   }
 
-  void _login(
+  void _signUp(
+    String fullName,
     String email,
     String password,
+    String confirmPasswod,
   ) async {
     showDialog(
       context: context,
@@ -95,22 +75,22 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
-    String url = 'http://192.168.0.167:3000/auth/login';
+    String url = '${AppConstants.HOST}sign-up';
 
-    final data = {
+    final body = {
+      'fullName': fullName,
       'email': email,
       'password': password,
+      'passwordConfirmation': confirmPasswod,
     };
 
-    http.Response response = await http.post(url, body: data);
+    final AppNetwork appNetwork = AppNetwork();
+
+    final Map<String, dynamic> data = await appNetwork.post(url, body: body);
 
     Navigator.pop(context);
 
-    if (response.statusCode == 201) {
-      _saveData(response);
-    } else {
-      print('server error');
-    }
+    _saveData(data);
   }
 
   void _validInputs() {
@@ -118,18 +98,32 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!isValid) return;
 
     String password = _passwordController.text;
+    String confirmPassword = _confirmPasswordController.text;
+
+    if (password != confirmPassword) {
+      showDialog(
+        context: context,
+        child: AlertDialog(
+          title: Text('Warning'),
+          content: Text('Passwords not matched!'),
+        ),
+      );
+      return;
+    }
+
+    String fullName = _fullNameController.text;
     String email = _emailController.text;
 
-    _login(email, password);
+    _signUp(fullName, email, password, confirmPassword);
   }
 
   @override
   void initState() {
     super.initState();
+    _fullNameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-
-    _checkLogin();
+    _confirmPasswordController = TextEditingController();
   }
 
   @override
@@ -149,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: EdgeInsets.all(20),
             children: [
               Text(
-                'Login',
+                'Sign Up',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 25,
@@ -158,6 +152,27 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(
                 height: 50,
+              ),
+              TextFormField(
+                validator: (text) {
+                  if (text.isEmpty)
+                    return 'fullName is empty';
+                  else if (text.length < 5)
+                    return 'fullName is too short';
+                  else
+                    return null;
+                },
+                controller: _fullNameController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: 'fullName',
+                  labelStyle: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 20,
               ),
               TextFormField(
                 validator: (text) {
@@ -183,6 +198,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               PasswordField(
                 controller: _passwordController,
+              ),
+              SizedBox(
+                height: 20,
+              ),
+              PasswordField(
+                controller: _confirmPasswordController,
+                lable: 'Confirm Password',
+                inputAction: TextInputAction.done,
               ),
               SizedBox(
                 height: 50,
@@ -211,16 +234,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Log in',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Sign up',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w300,
+                      ),
                     ),
                   ),
                 ),
@@ -230,13 +249,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               InkWell(
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
+                  /*Navigator.of(context).push(
+                   MaterialPageRoute(
                       builder: (context) {
-                        return SignUpScreen();
+                        return HomeScreen();
                       },
                     ),
-                  );
+                  );*/
                 },
                 child: RichText(
                   textAlign: TextAlign.center,
