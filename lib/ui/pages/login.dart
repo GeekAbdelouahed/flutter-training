@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (isLoggedUser) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => MainPage(),
+          builder: (_) => MainScreen(),
         ),
       );
     }
@@ -40,11 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _saveData(Map<String, dynamic> data) async {
     String accessToken = data['data']['accessToken'];
-    String refreshToekn = data['data']['refreshToken'];
+    String refreshToken = data['data']['refreshToken'];
 
     SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setString('accessToken', accessToken);
-    await preferences.setString('refreshToekn', refreshToekn);
+    await preferences.setString('refreshToken', refreshToken);
 
     await showDialog(
       context: context,
@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => HomeScreen(),
+        builder: (_) => HomePage(),
       ),
     );
   }

@@ -26,6 +26,7 @@ dependencies:
   cupertino_icons: ^1.0.0
   http: ^0.12.2
   shared_preferences: ^0.5.12+4
+  intl: ^0.16.1
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +47,7 @@ flutter:
   assets:
     - assets/images/image.jpg
     - assets/images/avatar.jpg
+    - assets/images/placeholder-image.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

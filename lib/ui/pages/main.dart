@@ -1,69 +1,84 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:hello/ui/pages/favorite.dart';
 import 'package:hello/ui/pages/home.dart';
 import 'package:hello/ui/pages/profile.dart';
 import 'package:hello/ui/pages/search.dart';
 
-class MainPage extends StatefulWidget {
+class MainScreen extends StatefulWidget {
   @override
-  _MainPageState createState() => _MainPageState();
+  _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 0;
-  PageController _pageController = PageController();
+class _MainScreenState extends State<MainScreen>
+    with SingleTickerProviderStateMixin {
+  TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          HomeScreen(),
+          HomePage(),
           SearchPage(),
-          FavoritPage(),
+          FavoritePage(),
           ProfilePage(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-            _pageController.jumpToPage(index);
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.grey,
-        selectedLabelStyle: TextStyle(color: Colors.red),
-        unselectedLabelStyle: TextStyle(color: Colors.grey),
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'home'.toUpperCase(),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'search'.toUpperCase(),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: 'favorite'.toUpperCase(),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle_outlined),
-            label: 'profile'.toUpperCase(),
-          ),
-        ],
+      bottomNavigationBar: BottomAppBar(
+        shape: CircularNotchedRectangle(),
+        child: TabBar(
+          controller: _tabController,
+          labelColor: Colors.black,
+          unselectedLabelColor: Colors.grey,
+          tabs: [
+            _buildTab('HOME', Icons.home),
+            _buildTab('SEARCH', Icons.search),
+            _buildTab('FAVORITE', Icons.favorite_border),
+            _buildTab('PROFILE', Icons.account_circle_outlined),
+          ],
+        ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: Icon(Icons.add),
+        mini: true,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
+
+  Widget _buildTab(String title, IconData icon) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            height: 10,
+          ),
+          Icon(
+            icon,
+            size: 20,
+          ),
+          FittedBox(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 5,
+          )
+        ],
+      );
 }

@@ -1,5 +1,6 @@
-import 'cover.dart';
 import 'author.dart';
+import 'category.dart';
+import 'cover.dart';
 
 class Article {
   final int readCount;
@@ -9,6 +10,7 @@ class Article {
   final String content;
   final String createdAt;
   final Cover cover;
+  final Category category;
 
   Article({
     this.readCount,
@@ -18,6 +20,7 @@ class Article {
     this.content,
     this.createdAt,
     this.cover,
+    this.category,
   });
 
   factory Article.fromJson(Map<String, dynamic> data) {
@@ -26,9 +29,10 @@ class Article {
       id: data['_id'],
       title: data['title'],
       author: Author.fromJson(data['author']),
-      content: data['contant'],
+      content: data['content'],
       createdAt: data['createdAt'],
       cover: Cover.fromJson(data['cover']),
+      category: Category.fromJson(data['category']),
     );
   }
 }

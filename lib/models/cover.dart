@@ -4,8 +4,10 @@ class Cover {
 
   Cover({this.imageName, this.imageUrl});
 
-  factory Cover.fromJson(Map<String, dynamic> data) => Cover(
-        imageName: data['image_name'],
-        imageUrl: data['image_url'],
-      );
+  factory Cover.fromJson(Map<String, dynamic> data) => data == null
+      ? null
+      : Cover(
+          imageName: data['image_name'],
+          imageUrl: data['image_url'],
+        );
 }
