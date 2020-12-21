@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:hello/services/network.dart';
 
 import '../../constants.dart';
-import '../../data.dart';
 import '../../models/article.dart';
+import '../../models/category.dart';
 import '../components/article.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,16 +14,33 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Future<List<Article>> _getData() async {
-    String url = '${AppConstants.HOST}public/articles';
-    AppNetwork appNetwork = AppNetwork();
-    final Map<String, dynamic> data = await appNetwork.get(url);
-    List articlesData = data['data']['articles'];
-    return articlesData.map((e) => Article.fromJson(e)).toList();
+  Category _selectedCategory;
+
+  AppNetwork _appNetwork = AppNetwork();
+
+  Future<List<Category>> _getCategories() async {
+    String url = '${AppConstants.HOST}public/categories';
+    final Map<String, dynamic> data = await _appNetwork.get(url);
+    List listData = data['data']['categories'];
+    return listData.map((e) => Category.fromJson(e)).toList();
+  }
+
+  Future<List<Article>> _getArticles() async {
+    String url;
+    if (_selectedCategory != null) {
+      url =
+          '${AppConstants.HOST}public/articles?category=${_selectedCategory.id}';
+    } else
+      url = '${AppConstants.HOST}public/articles';
+    final Map<String, dynamic> data = await _appNetwork.get(url);
+    List listData = data['data']['articles'];
+    return listData.map((e) => Article.fromJson(e)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final DateTime dateTime = DateTime.now();
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -37,7 +54,7 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 children: [
                   Text(
-                    'Good Morning!',
+                    dateTime.hour > 18 ? 'Good Night!' : 'Good Morning!',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 20,
@@ -71,49 +88,75 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(
               height: 50,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                itemCount: Data.getCategories().length,
-                itemBuilder: (context, index) {
-                  String category = Data.getCategories()[index];
-                  return Chip(
-                    label: Text(category),
-                  );
-                },
-                separatorBuilder: (context, index) => SizedBox(
-                  width: 10,
-                ),
-              ),
+              child: FutureBuilder<List<Category>>(
+                  future: _getCategories(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      print(snapshot.error);
+                      return Text('Server error');
+                    }
+
+                    if (snapshot.hasData)
+                      return ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: snapshot.data.length,
+                        itemBuilder: (context, index) {
+                          Category category = snapshot.data[index];
+                          bool isCategorySelected =
+                              _selectedCategory?.id == category.id;
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isCategorySelected)
+                                  _selectedCategory = null;
+                                else
+                                  _selectedCategory = category;
+                              });
+                            },
+                            child: Chip(
+                              backgroundColor: isCategorySelected
+                                  ? Colors.blue
+                                  : Colors.grey.shade300,
+                              label: Text(
+                                category.name,
+                                style: TextStyle(
+                                  color: isCategorySelected
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, index) => SizedBox(
+                          width: 10,
+                        ),
+                      );
+
+                    return SizedBox();
+                  }),
             ),
             SizedBox(
               height: 20,
             ),
             FutureBuilder<List<Article>>(
-              future: _getData(),
+              future: _getArticles(),
               builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  print(snapshot.error);
-                  return Text('unknown error!');
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    print(snapshot.error);
+                    return Text('unknown error!');
+                  }
+                  if (snapshot.hasData)
+                    return Column(
+                      children: snapshot.data
+                          .map((article) => ArticleWidget(
+                                article: article,
+                              ))
+                          .toList(),
+                    );
                 }
-                if (snapshot.hasData)
-                  return Column(
-                    children: snapshot.data
-                        .map((article) => ArticleWidget(
-                              article: article,
-                            ))
-                        .toList(),
-                  );
-                /*return ListView.separated(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (context, index) => ArticleWidget(
-                      article: snapshot.data[index],
-                    ),
-                    separatorBuilder: (context, index) => SizedBox(
-                      height: 10,
-                    ),
-                  );*/
 
                 return Center(
                   child: CircularProgressIndicator(),

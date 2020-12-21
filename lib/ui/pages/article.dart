@@ -149,7 +149,7 @@ class ArticleScreen extends StatelessWidget {
                     alignment: AlignmentDirectional.bottomEnd,
                     child: Text(
                       DateFormat('yyyy/MMM/dd hh:MM').format(
-                        DateTime.now(),
+                        DateTime.parse(article.createdAt),
                       ),
                     ),
                   ),
